@@ -31,6 +31,7 @@ class Video_Recorder :
         feed from the link/URL and keep saving it to the output,
         when finally the key to stop the recording is pressed.'''
 
+        
         while self.capture_object.isOpened():
             self.ret , self.frame = self.capture_object.read()
             if not self.ret:

@@ -1,0 +1,61 @@
+from smart_cam.models import Stream
+from django.http.response import HttpResponse, JsonResponse
+from rest_framework.views import APIView
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+from smart_cam.scripts.recorder import Video_Recorder
+
+recorders = {}
+
+class StreamAPI(APIView):
+    def get(self):
+        return HttpResponse("Get stream")
+
+    def post(self, request):
+
+        feed_url = request.data["url"]
+        stream = Stream(url=feed_url, enabled=True)
+        stream.save()
+
+        return JsonResponse({"id": stream.id, "url": stream.url})
+
+    def put(self, request):
+
+        feed_url = request.data["url"]
+        stream = Stream.objects.get(url=feed_url)
+        stream.enabled = request.data["enabled"]
+        stream.save()
+
+        return HttpResponse("Update stream")
+
+    def delete(self):
+        return HttpResponse("Delete stream")
+
+
+@receiver(post_save, sender=Stream)
+def custom_handler(sender, instance, **kwargs):
+    print("Stream updated")
+    # Should create celery tasks
+    if not instance.enabled:
+        print("Instance disable requested by user")
+        if instance.id in recorders.keys():
+            recorder = recorders[instance.id]
+            recorder.stop_recording()
+            print("Stopped recording")
+        return
+
+
+    recorder = Video_Recorder(
+        instance.url,
+        instance.url,
+        instance.id, 
+        f'{instance.id}.mp4'
+    )
+
+    recorders[instance.id] = recorder
+    print("Started new recording")
+
+    # recorder.start_rec()

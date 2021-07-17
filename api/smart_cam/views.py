@@ -6,9 +6,14 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
-from smart_cam.scripts.recorder import Video_Recorder
+from smart_cam.scripts.recorder import (
+    Video_Recorder,
+    start_all_threads,
+    join_all_threads,
+)
 
 recorders = {}
+
 
 class StreamAPI(APIView):
     def get(self):
@@ -43,19 +48,15 @@ def custom_handler(sender, instance, **kwargs):
         print("Instance disable requested by user")
         if instance.id in recorders.keys():
             recorder = recorders[instance.id]
-            recorder.stop_recording()
+            recorder.enabled = False
+            join_all_threads([recorder])
             print("Stopped recording")
         return
 
-
     recorder = Video_Recorder(
-        instance.url,
-        instance.url,
-        instance.id, 
-        f'{instance.id}.mp4'
+        instance.url, instance.url, f"{instance.id}", f"{instance.id}.mp4"
     )
 
     recorders[instance.id] = recorder
+    start_all_threads([recorder])
     print("Started new recording")
-
-    # recorder.start_rec()

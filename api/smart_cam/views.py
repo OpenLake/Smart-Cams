@@ -16,7 +16,7 @@ recorders = {}
 
 
 class StreamAPI(APIView):
-    def get(self):
+    def get(self, request):
         return HttpResponse("Get stream")
 
     def post(self, request):

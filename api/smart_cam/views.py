@@ -22,6 +22,7 @@ class StreamAPI(APIView):
 
     def post(self, request):
 
+        #Create a new Stream
         feed_url = request.data["url"]
         stream = Stream(url=feed_url, enabled=True)
         stream.save()
@@ -30,6 +31,7 @@ class StreamAPI(APIView):
 
     def put(self, request):
 
+        #Update the enabled status of a stream
         feed_url = request.data["url"]
         stream = Stream.objects.get(url=feed_url)
         stream.enabled = request.data["enabled"]
@@ -40,6 +42,7 @@ class StreamAPI(APIView):
 
     def delete(self, request):
         
+        #Stops the stream with given url
         feed_url = request.data["url"]
         stream = Stream.objects.get(url=feed_url)
         stream.enabled = False

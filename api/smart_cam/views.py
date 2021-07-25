@@ -16,7 +16,8 @@ recorders = {}
 
 
 class StreamAPI(APIView):
-    def get(self):
+    def get(self,request):
+
         return HttpResponse("Get stream")
 
     def post(self, request):
@@ -36,8 +37,16 @@ class StreamAPI(APIView):
 
         return HttpResponse("Update stream")
 
-    def delete(self):
-        return HttpResponse("Delete stream")
+
+    def delete(self, request):
+        
+        feed_url = request.data["url"]
+        stream = Stream.objects.get(url=feed_url)
+        stream.enabled = False
+        stream.save()
+
+        return HttpResponse("Stream Stopped")
+
 
 
 @receiver(post_save, sender=Stream)

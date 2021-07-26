@@ -1,10 +1,13 @@
 from smart_cam.models import Stream
-from django.http.response import HttpResponse, JsonResponse
+from smart_cam.serializers import StreamSerializer
+from django.http.response import JsonResponse
 from rest_framework.views import APIView
+from rest_framework import status
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+import json
 
 from smart_cam.scripts.recorder import (
     Video_Recorder,
@@ -16,9 +19,14 @@ recorders = {}
 
 
 class StreamAPI(APIView):
-    def get(self,request):
-
-        return HttpResponse("Get stream")
+    def get(self, request, stream_id=None):
+        if stream_id is None:
+            responseData = Stream.objects.all() 
+            serializer = StreamSerializer(responseData,many=True)
+        else:
+            responseData = Stream.objects.get(id=stream_id)    
+            serializer = StreamSerializer(responseData)
+        return JsonResponse(serializer.data, safe=False)
 
     def post(self, request):
 
@@ -27,28 +35,31 @@ class StreamAPI(APIView):
         stream = Stream(url=feed_url, enabled=True)
         stream.save()
 
-        return JsonResponse({"id": stream.id, "url": stream.url})
+        streamIdAndUrl = {"id": stream.id, "url": stream.url}
+        return JsonResponse(streamIdAndUrl,status=status.HTTP_201_CREATED)
 
-    def put(self, request):
+    def put(self, request, stream_id):
 
         #Update the enabled status of a stream
-        feed_url = request.data["url"]
-        stream = Stream.objects.get(url=feed_url)
-        stream.enabled = request.data["enabled"]
+        stream = Stream.objects.get(id=stream_id)
+        updatedEnabledVal = json.loads(request.data["enabled"].lower())
+        stream.enabled = updatedEnabledVal
         stream.save()
 
-        return HttpResponse("Update stream")
+        updateMsg = {'message': f'Stream {stream_id} has been updated'}
+
+        return JsonResponse(updateMsg)
 
 
-    def delete(self, request):
+    def delete(self, request, stream_id):
         
-        #Stops the stream with given url
-        feed_url = request.data["url"]
-        stream = Stream.objects.get(url=feed_url)
-        stream.enabled = False
-        stream.save()
+        #Deletes the stream with given id
+        stream = Stream.objects.get(id=stream_id)
+        stream.delete()
 
-        return HttpResponse("Stream Stopped")
+        deleteMsg = {'message': f'Stream {stream_id} has been deleted'}
+
+        return JsonResponse(deleteMsg)
 
 
 

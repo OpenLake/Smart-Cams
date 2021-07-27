@@ -95,5 +95,9 @@ def custom_handler(sender, instance, **kwargs):
     )
 
     recorders[instance.id] = recorder
-    start_all_threads([recorder])
-    print("Started new recording")
+    try:
+        start_all_threads([recorder])
+    except:
+        print("Stream not found")
+    else:        
+        print("Started new recording")

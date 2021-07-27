@@ -11,7 +11,7 @@ class TestViews(APITestCase):
     userCnt = 0 #Stores the cnt of streams created while testing
     def setUp(self):
         #create test streams for the update, delete and fetch tests
-        stream = {"url": "192.168.43.1:8080/video?640x480", "enabled": "True"}
+        stream = {"url": "http://192.168.43.1:8010/video?640x480", "enabled": "True"}
         Stream.objects.create(**stream)
         self.userCnt+=1
         print()

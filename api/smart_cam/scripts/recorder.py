@@ -90,6 +90,7 @@ class Video_Recorder:
         """Releases the capture object and output and destroys windows
         when stop key is pressed. In a way, this function winds up everything."""
         print("Stopping recording\n")
+        self.capture_object.release()
         self.output.release()
         cv2.destroyAllWindows()
 

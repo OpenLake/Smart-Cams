@@ -10,6 +10,9 @@ Cameras are everywhere but most of them are dumb devices that simply record the 
 - Alerts when blacklisted/unknown people are detected
 - Tech Stack : React, maybe Flutter/Kotlin, Django and lots of ML stuff
 
+## Contributing
+- See [here](https://github.com/OpenLake/Smart-Cams/blob/master/CONTRIBUTING.md)
+
 ## Maintainers
 - 👤 **Ruskin Manku** [@RuskinManku](https://github.com/RuskinManku)
 - 👤 **Kumar Shivendu** [@KShivendu](https://github.com/KShivendu)

@@ -32,7 +32,6 @@ class Video_Recorder:
         """This method ensures that the program keeps reading video
         feed from the link/URL and keep saving it to the output,
         when finally the key to stop the recording is pressed."""
-
         while self.capture_object.isOpened():
             self.ret, self.frame = self.capture_object.read()
             if not self.ret:
@@ -48,6 +47,9 @@ class Video_Recorder:
             if cv2.waitKey(1) == ord(self.stop_key) or not self.enabled:
                 self.stop_recording()
                 break
+        else:
+            #if stream url not found
+            self.failed_connection()
 
     def reconnecting(self):
         """Creates and returns a Video capture object"""
@@ -74,7 +76,7 @@ class Video_Recorder:
     def failed_connection(self):
         """Displays total failure message and calls stop_recording function"""
 
-        print("All connection attempts failed, sorry !!")
+        print("All connection attempts failed, sorry !!\n")
         self.stop_recording()
 
     def reconnection_success(self):
@@ -86,7 +88,6 @@ class Video_Recorder:
         """Releases the capture object and output and destroys windows
         when stop key is pressed. In a way, this function winds up everything."""
         print("Stopping recording")
-        self.capture_object.release()
         self.output.release()
         cv2.destroyAllWindows()
 

@@ -19,6 +19,7 @@ recorders = {}
 
 
 class StreamAPI(APIView):
+
     def get(self, request, stream_id=None):
         if stream_id is None:
             responseData = Stream.objects.all() 

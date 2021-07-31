@@ -19,5 +19,6 @@ from smart_cam import views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("stream/", views.StreamAPI.as_view()),
+    path("streams/", views.StreamAPI.as_view(), name = "streams"),
+    path('streams/<int:stream_id>', views.StreamAPI.as_view(), name = "streams_with_id")
 ]

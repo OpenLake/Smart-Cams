@@ -27,12 +27,12 @@ class Video_Recorder:
         self.output = cv2.VideoWriter(self.out_file_name, self.fourcc, 20.0, (300, 300))
         self.cam_thread = threading.Thread(target=self.start_rec)
         self.enabled = True
+        self.is_valid = True #Incase the stream url is invalid this will be set to false
 
     def start_rec(self):
         """This method ensures that the program keeps reading video
         feed from the link/URL and keep saving it to the output,
         when finally the key to stop the recording is pressed."""
-
         while self.capture_object.isOpened():
             self.ret, self.frame = self.capture_object.read()
             if not self.ret:
@@ -48,6 +48,10 @@ class Video_Recorder:
             if cv2.waitKey(1) == ord(self.stop_key) or not self.enabled:
                 self.stop_recording()
                 break
+        else:
+            #if stream url not found
+            self.is_valid = False
+            self.stop_recording()
 
     def reconnecting(self):
         """Creates and returns a Video capture object"""
@@ -74,7 +78,7 @@ class Video_Recorder:
     def failed_connection(self):
         """Displays total failure message and calls stop_recording function"""
 
-        print("All connection attempts failed, sorry !!")
+        print("All connection attempts failed, sorry !!\n")
         self.stop_recording()
 
     def reconnection_success(self):
@@ -85,7 +89,8 @@ class Video_Recorder:
     def stop_recording(self):
         """Releases the capture object and output and destroys windows
         when stop key is pressed. In a way, this function winds up everything."""
-        print("Stopping recording")
+        print("Stopping recording\n")
+        self.enabled = False
         self.capture_object.release()
         self.output.release()
         cv2.destroyAllWindows()
@@ -132,6 +137,9 @@ def start_all_threads(list_of_cams):
 
     for th in list_of_cams:
         th.cam_thread.start()
+        if th.is_valid==False:
+            raise Exception("Invalid Stream")
+
 
 
 def join_all_threads(list_of_cams):

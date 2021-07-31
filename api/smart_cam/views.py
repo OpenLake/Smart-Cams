@@ -7,8 +7,6 @@ from rest_framework import status
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-import json
-
 from smart_cam.scripts.recorder import (
     Video_Recorder,
     start_all_threads,
@@ -19,54 +17,80 @@ recorders = {}
 
 
 class StreamAPI(APIView):
+
+    ##############################Utility functions##############################
+
+    def safe_get(self,id):
+        """
+        Avoid Stream.DoesNotExist exception and return 'None' on getting the exception  
+        """
+        try:
+            stream = Stream.objects.get(id=id)
+        except Stream.DoesNotExist:
+            stream = None 
+        return stream
+
+    def stream_not_found(self,id):
+        """
+        Respond when a get or put request is made for a stream that does not exist in the database
+        """
+        failure_message = {'error': f'Stream {id} not found'}
+        return JsonResponse(failure_message, status = status.HTTP_400_BAD_REQUEST)
+
+    def validate_and_save_serializer(self,serializer, success_message, success_status):
+        """
+        Validate the data, save to database if valid and respond accordingly
+        """
+        if serializer.is_valid():
+            serializer.save()
+            response_body = serializer.data
+            response_body['message'] = success_message
+            return JsonResponse(response_body, status=success_status)
+        else:    
+            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
+
+    
+    ##############################CRUD functions##############################
+
     def get(self, request, stream_id=None):
-        if stream_id is None:
-            responseData = Stream.objects.all() 
-            serializer = StreamSerializer(responseData,many=True)
-        else:
-            responseData = Stream.objects.get(id=stream_id)    
-            serializer = StreamSerializer(responseData)
+        """
+        Get all the stream objects in thr database or a single stream objects corresponding to the given 'stream_id'
+        """
+        if stream_id is None:                  #respond to urlpattern 'streams'
+            streams = Stream.objects.all() 
+            serializer = StreamSerializer(streams,many=True)
+        else:                                  #respond to urlpattern 'streams/<int:stream_id>'
+            streams = self.safe_get(id=stream_id) 
+            if streams is None:   
+                return self.stream_not_found(id=stream_id)
+            else:
+                serializer = StreamSerializer(streams)   
         return JsonResponse(serializer.data, safe=False)
 
     def post(self, request):
-
-        #Create a new Stream
-        feed_url = request.data["url"]
-        stream = Stream(url=feed_url, enabled=True)
-        stream.save()
-
-        streamIdAndUrl = {"id": stream.id, "url": stream.url}
-        return JsonResponse(streamIdAndUrl,status=status.HTTP_201_CREATED)
-
-    #safe_get to avoid Stream.DoesNotExist exception
-    def safe_get(self,id):
-        try:
-            got = Stream.objects.get(id=id)
-        except Stream.DoesNotExist:
-            got = None 
-        return got       
+        """
+        Create a new Stream
+        """
+        serializer = StreamSerializer(data=request.data)
+        success_message = 'Stream created successfully'
+        return self.validate_and_save_serializer(serializer, success_message, status.HTTP_201_CREATED)
 
     def put(self, request, stream_id):
-
-        #Update the enabled status of a stream
+        """
+        Update the enabled status of a stream
+        """
         stream = self.safe_get(id=stream_id)
-        updatedEnabledVal = json.loads(request.data["enabled"].lower())
-
         if stream is not None:
-            stream.enabled = updatedEnabledVal
-            stream.save()
-            updateMsg = {'message': f'Stream {stream_id} has been updated'}
-            returnStatus = status.HTTP_200_OK
+            serializer = StreamSerializer(stream, data=request.data)
+            success_message = f'Stream {stream_id} updated successfully'
+            return self.validate_and_save_serializer(serializer, success_message, status.HTTP_200_OK)
         else:
-            updateMsg = {'error': f'Stream {stream_id} does not exist'}
-            returnStatus = status.HTTP_404_NOT_FOUND
-
-        return JsonResponse(updateMsg, status=returnStatus)
-
-
+            return self.stream_not_found(id=stream_id)  
+       
     def delete(self, request, stream_id):
-        
-        #Deletes the stream with given id
+        """
+        Deletes the stream with given id
+        """
         stream = Stream.objects.get(id=stream_id)
         stream.enabled = False
         stream.delete()
@@ -99,5 +123,8 @@ def custom_handler(sender, instance, **kwargs):
         start_all_threads([recorder])
     except:
         print("Stream not found")
+        #Revert the 'enabled' to false if stream not found
+        instance.enabled=False
+        instance.save()
     else:        
         print("Started new recording")

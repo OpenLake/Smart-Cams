@@ -27,7 +27,7 @@ class Video_Recorder:
         self.output = cv2.VideoWriter(self.out_file_name, self.fourcc, 20.0, (300, 300))
         self.cam_thread = threading.Thread(target=self.start_rec)
         self.enabled = True
-        self.valid = True #Incase the stream url is invalid this will be set to false
+        self.is_valid = True #Incase the stream url is invalid this will be set to false
 
     def start_rec(self):
         """This method ensures that the program keeps reading video
@@ -50,7 +50,7 @@ class Video_Recorder:
                 break
         else:
             #if stream url not found
-            self.valid = False
+            self.is_valid = False
             self.stop_recording()
 
     def reconnecting(self):
@@ -90,6 +90,7 @@ class Video_Recorder:
         """Releases the capture object and output and destroys windows
         when stop key is pressed. In a way, this function winds up everything."""
         print("Stopping recording\n")
+        self.enabled = False
         self.capture_object.release()
         self.output.release()
         cv2.destroyAllWindows()
@@ -136,7 +137,7 @@ def start_all_threads(list_of_cams):
 
     for th in list_of_cams:
         th.cam_thread.start()
-        if th.valid==False:
+        if th.is_valid==False:
             raise Exception("Invalid Stream")
 
 

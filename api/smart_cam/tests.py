@@ -10,8 +10,10 @@ class TestViews(APITestCase):
 
     userCnt = 0 #Stores the cnt of streams created while testing
     def setUp(self):
-        #create test streams for the update, delete and fetch tests
-        stream = {"url": "http://192.168.43.1:8010/video?640x480", "enabled": "True"}
+        """
+        create test stream for the update, delete and fetch tests
+        """
+        stream = {"url": "http://192.168.43.1:8080/video?640x480", "enabled": "True"}
         Stream.objects.create(**stream)
         self.userCnt+=1
         print()
@@ -20,8 +22,8 @@ class TestViews(APITestCase):
         print("Test_create")
 
         #create three test streams
-        stream = {"url": "192.168.43.1:4747/video?640x480"}    
-        response = self.client.post(reverse("stream"),stream)
+        stream = {"url": "192.168.43.1:8080/video?640x480"}    
+        response = self.client.post(reverse("streams"),stream)
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED) 
         self.userCnt+=1
@@ -31,12 +33,12 @@ class TestViews(APITestCase):
         print("Test_fetch")
 
         #fetch all streams
-        response = self.client.get(reverse("stream"))
+        response = self.client.get(reverse("streams"))
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         #fetch stream by id
-        response = self.client.get(reverse("stream_with_id", args=[1]))
+        response = self.client.get(reverse("streams_with_id", args=[1]))
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
@@ -45,14 +47,14 @@ class TestViews(APITestCase):
         print("Test_update")
 
         #update the test stream
-        data = {"enabled": "False"}
-        response = self.client.put(reverse("stream_with_id", args=[1]),data)
+        data = {"enabled": False}
+        response = self.client.put(reverse("streams_with_id", args=[1]),data)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK) 
 
         #update the test stream
-        data = {"enabled": "True"}
-        response = self.client.put(reverse("stream_with_id", args=[1]),data)
+        data = {"enabled": True}
+        response = self.client.put(reverse("streams_with_id", args=[1]),data)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK) 
 
@@ -60,7 +62,7 @@ class TestViews(APITestCase):
         print("Test_delete")
 
         #delete the test stream
-        response = self.client.delete(reverse("stream_with_id", args=[1]))
+        response = self.client.delete(reverse("streams_with_id", args=[1]))
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)    
 
@@ -70,7 +72,7 @@ class TestViews(APITestCase):
 
         data = {"enabled": "False"}
         for i in range(1,self.userCnt+1):
-            response = self.client.put(reverse("stream_with_id", args=[i]),data)
+            response = self.client.put(reverse("streams_with_id", args=[i]),data)
 
         for i in range(1,self.userCnt+1):
             path = f"smart_cam\stream_recordings\{i}.mp4"
